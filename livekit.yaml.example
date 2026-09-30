@@ -1,0 +1,22 @@
+# Self-hosted LiveKit SFU configuration.
+# Replace the domain/certificate paths before production use.
+port: 7880
+bind_addresses:
+  - 0.0.0.0
+rtc:
+  tcp_port: 7881
+  port_range_start: 50000
+  port_range_end: 60000
+
+keys:
+  REPLACE_API_KEY: REPLACE_API_SECRET
+
+# Embedded TURN relay. This lets clients use TURN when direct UDP paths fail.
+turn:
+  enabled: true
+  domain: turn.your-domain.com
+  tls_port: 5349
+  udp_port: 3478
+
+# For production, terminate TLS at a reverse proxy or configure LiveKit TLS
+# according to your deployment. The browser should connect with wss://.
