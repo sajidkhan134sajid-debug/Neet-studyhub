@@ -68,7 +68,11 @@ app.use(express.json({limit:'20kb'}));
 app.use(rateLimit({windowMs:15*60*1000,max:300,standardHeaders:true,legacyHeaders:false}));
 app.use('/api/login',rateLimit({windowMs:15*60*1000,max:30,message:{error:'Too many login attempts. Try again later.'}}));
 app.use('/api/register',rateLimit({windowMs:15*60*1000,max:20,message:{error:'Too many signup attempts. Try again later.'}}));
-app.use(express.static(path.join(__dirname,'../client')));
+const clientDir = path.join(__dirname, '../client');
+const clientIndex = path.join(clientDir, 'index.html');
+const rootIndex = path.join(__dirname, '../index.html');
+if (fs.existsSync(clientDir)) app.use(express.static(clientDir));
+else app.use(express.static(path.join(__dirname, '..')));
 
 const cleanName=x=>String(x||'').trim().replace(/\s+/g,' ').slice(0,50);
 const cleanEmail=x=>String(x||'').trim().toLowerCase().slice(0,160);
@@ -179,5 +183,9 @@ io.on('connection',s=>{
 // Socket auth: the client sends the same JWT during handshake.
 io.use((s,next)=>{try{const raw=s.handshake.auth?.token||'';const p=jwt.verify(raw,JWT_SECRET);const u=db.prepare('SELECT id,name,banned FROM users WHERE id=?').get(p.id);if(!u||u.banned)return next(new Error('Unauthorized'));s.userId=u.id;next();}catch(e){next(new Error('Unauthorized'));}});
 
-app.get('*',(req,res)=>res.sendFile(path.join(__dirname,'../client/index.html')));
+app.get('*',(req,res)=>{
+  if (fs.existsSync(clientIndex)) return res.sendFile(clientIndex);
+  if (fs.existsSync(rootIndex)) return res.sendFile(rootIndex);
+  return res.status(404).send('NEET StudyHub frontend not found');
+});
 server.listen(PORT,()=>console.log(`NEET StudyHub running on :${PORT}`));
